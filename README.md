@@ -2,6 +2,19 @@
 
 这是一个可版本化安装的 Codex Plugin，用于围绕指定产品或技术主题，核验目标法律主体的控制关系、管理层和技术负责人，并产出一致的 JSON 调查底稿与 Excel 审阅件。
 
+## 自动触发条件
+
+当请求的目标是围绕指定法律主体及其产品、业务或技术主题，调查控制关系或核心人员时，
+Plugin 会自动匹配。例如：
+
+- “调查某公司在 AI 芯片业务上的实控人、管理层和技术负责人。”
+- “核验某企业做储能产品的创始人、法人和研发负责人。”
+- “围绕某技术方案，梳理甲公司及相关主体的核心人员和证据。”
+
+若已明确要调查某公司的技术负责人或管理层、但尚缺产品或技术主题，Plugin 会先接管请求
+并收集缺失信息，不启动外部调查。仅查工商登记信息、从品牌或 SKU 找制造商、专利检索、
+发明人验证和 FTO 分析不会自动使用本 Plugin。
+
 ## 远程安装
 
 前提：已安装支持 Plugin 的 Codex CLI，并可访问发布该 Plugin 的 Git 仓库。
@@ -26,7 +39,7 @@ codex plugin marketplace upgrade jeffrey-legal-research
 codex plugin add legal-entity-key-people-investigation@jeffrey-legal-research
 ```
 
-安装或更新后，请新建一个 Codex 任务。
+更新完成后，请新建一个 Codex 任务，让新任务加载最新的 Skill 触发规则与调查流程。
 
 ## 从本地克隆安装
 
