@@ -1,0 +1,6 @@
+interface:
+  display_name: "法律主体核心人员调查"
+  short_description: "核验目标主体的控制关系与核心人员并输出可追溯底稿"
+  default_prompt: "使用 $legal-entity-key-people-investigation 调查这些目标主体与指定产品或技术主题相关的核心人员，并生成 JSON 底稿和 Excel 审阅件。"
+policy:
+  allow_implicit_invocation: true

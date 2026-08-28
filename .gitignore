@@ -1,0 +1,41 @@
+# Local Git worktrees
+.worktrees/
+
+# Private development files excluded from the shared skill package
+tests/
+assets/
+docs/superpowers/
+
+# Runtime output
+working/
+outputs/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# Node.js
+node_modules/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local test scratch data
+.test-tmp/
+.test-scratch/

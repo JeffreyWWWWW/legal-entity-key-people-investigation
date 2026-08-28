@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/legal-entity-key-people-investigation/investigation-state.schema.json",
+  "title": "法律主体核心人员调查状态",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["规范版本", "任务元数据", "输入材料", "技术主题", "目标主体引用", "公司主体", "主体关系", "核心人员", "人员身份", "证据记录", "查询记录", "冲突与待确认项", "主体调查结果", "阶段判断", "用户确认记录", "渲染元数据"],
+  "properties": {
+    "规范版本": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "任务元数据": { "$ref": "#/$defs/taskMetadata" },
+    "输入材料": { "type": "array", "items": { "$ref": "#/$defs/source" } },
+    "技术主题": { "$ref": "#/$defs/technicalTopic" },
+    "目标主体引用": { "type": "array", "items": { "$ref": "#/$defs/entityId" }, "uniqueItems": true },
+    "公司主体": { "type": "array", "items": { "$ref": "#/$defs/entity" } },
+    "主体关系": { "type": "array", "items": { "$ref": "#/$defs/relationship" } },
+    "核心人员": { "type": "array", "items": { "$ref": "#/$defs/person" } },
+    "人员身份": { "type": "array", "items": { "$ref": "#/$defs/position" } },
+    "证据记录": { "type": "array", "items": { "$ref": "#/$defs/evidence" } },
+    "查询记录": { "type": "array", "items": { "$ref": "#/$defs/query" } },
+    "冲突与待确认项": { "type": "array", "items": { "$ref": "#/$defs/issue" } },
+    "主体调查结果": { "type": "array", "items": { "$ref": "#/$defs/result" } },
+    "阶段判断": { "$ref": "#/$defs/judgment" },
+    "用户确认记录": { "type": "array", "items": { "$ref": "#/$defs/approval" } },
+    "渲染元数据": { "$ref": "#/$defs/renderMetadata" }
+  },
+  "$defs": {
+    "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+    "dateOrNull": { "oneOf": [{ "$ref": "#/$defs/date" }, { "type": "null" }] },
+    "dateTime": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})$" },
+    "dateTimeOrNull": { "oneOf": [{ "$ref": "#/$defs/dateTime" }, { "type": "null" }] },
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "stringList": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "sourceId": { "type": "string", "pattern": "^SRC-[0-9]{3,}$" },
+    "entityId": { "type": "string", "pattern": "^ENT-[0-9]{3,}$" },
+    "relationshipId": { "type": "string", "pattern": "^REL-[0-9]{3,}$" },
+    "personId": { "type": "string", "pattern": "^PER-[0-9]{3,}$" },
+    "positionId": { "type": "string", "pattern": "^POS-[0-9]{3,}$" },
+    "evidenceId": { "type": "string", "pattern": "^EVD-[0-9]{3,}$" },
+    "queryId": { "type": "string", "pattern": "^QRY-[0-9]{3,}$" },
+    "issueId": { "type": "string", "pattern": "^ISS-[0-9]{3,}$" },
+    "resultId": { "type": "string", "pattern": "^RES-[0-9]{3,}$" },
+    "approvalId": { "type": "string", "pattern": "^APR-[0-9]{3,}$" },
+    "factStatus": { "enum": ["已核验", "部分核验", "待核验", "存在冲突", "未发现"] },
+    "taskMetadata": {
+      "type": "object", "additionalProperties": false,
+      "required": ["任务编号", "调查基准日", "创建时间", "更新时间", "原始请求"],
+      "properties": {
+        "任务编号": { "$ref": "#/$defs/nonEmptyString" }, "调查基准日": { "$ref": "#/$defs/date" },
+        "创建时间": { "$ref": "#/$defs/dateTime" }, "更新时间": { "$ref": "#/$defs/dateTime" }, "原始请求": { "type": "string" }
+      }
+    },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["材料编号", "类型", "原始名称", "路径或对话引用", "SHA256", "登记时间", "用途"],
+      "properties": {
+        "材料编号": { "$ref": "#/$defs/sourceId" }, "类型": { "enum": ["对话", "JSON", "Excel", "Word", "PDF", "图片", "网页", "其他"] },
+        "原始名称": { "$ref": "#/$defs/nonEmptyString" }, "路径或对话引用": { "$ref": "#/$defs/nonEmptyString" },
+        "SHA256": { "type": "string", "pattern": "^$|^[A-F0-9]{64}$" }, "登记时间": { "$ref": "#/$defs/dateTime" }, "用途": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "technicalTopic": {
+      "type": "object", "additionalProperties": false,
+      "required": ["主题名称", "主题描述", "产品或技术关键词", "用户原文引用"],
+      "properties": { "主题名称": { "type": "string" }, "主题描述": { "type": "string" }, "产品或技术关键词": { "$ref": "#/$defs/stringList" }, "用户原文引用": { "$ref": "#/$defs/stringList" } }
+    },
+    "entity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["主体编号", "原始名称", "规范法律名称", "注册地", "唯一识别信息", "名称变体", "主体身份状态", "是否目标主体", "证据引用", "待复核事项"],
+      "properties": {
+        "主体编号": { "$ref": "#/$defs/entityId" }, "原始名称": { "type": "array", "items": { "$ref": "#/$defs/nonEmptyString" }, "minItems": 1, "uniqueItems": true },
+        "规范法律名称": { "$ref": "#/$defs/nonEmptyString" }, "注册地": { "type": "string" }, "唯一识别信息": { "$ref": "#/$defs/stringList" },
+        "名称变体": { "$ref": "#/$defs/stringList" }, "主体身份状态": { "$ref": "#/$defs/factStatus" }, "是否目标主体": { "type": "boolean" },
+        "证据引用": { "type": "array", "items": { "$ref": "#/$defs/evidenceId" }, "uniqueItems": true }, "待复核事项": { "$ref": "#/$defs/stringList" }
+      }
+    },
+    "relationship": {
+      "type": "object", "additionalProperties": false,
+      "required": ["关系编号", "起点主体引用", "终点主体引用", "关系类型", "开始日期", "结束日期", "目标业务相关性", "扩展层数", "纳入理由", "核验状态", "证据引用"],
+      "properties": {
+        "关系编号": { "$ref": "#/$defs/relationshipId" }, "起点主体引用": { "$ref": "#/$defs/entityId" }, "终点主体引用": { "$ref": "#/$defs/entityId" },
+        "关系类型": { "enum": ["母公司", "子公司", "收购方", "被收购主体", "历史主体", "运营主体", "更名", "商业名称", "其他"] },
+        "开始日期": { "$ref": "#/$defs/dateOrNull" }, "结束日期": { "$ref": "#/$defs/dateOrNull" }, "目标业务相关性": { "enum": ["直接相关", "间接相关", "待判断", "无关"] },
+        "扩展层数": { "type": "integer", "minimum": 0, "maximum": 2 }, "纳入理由": { "type": "string" }, "核验状态": { "$ref": "#/$defs/factStatus" },
+        "证据引用": { "type": "array", "items": { "$ref": "#/$defs/evidenceId" }, "uniqueItems": true }
+      }
+    },
+    "person": {
+      "type": "object", "additionalProperties": false,
+      "required": ["人员编号", "规范姓名", "原始姓名", "去重辅助信息", "身份引用"],
+      "properties": {
+        "人员编号": { "$ref": "#/$defs/personId" }, "规范姓名": { "$ref": "#/$defs/nonEmptyString" },
+        "原始姓名": { "type": "array", "items": { "$ref": "#/$defs/nonEmptyString" }, "minItems": 1, "uniqueItems": true }, "去重辅助信息": { "$ref": "#/$defs/stringList" },
+        "身份引用": { "type": "array", "items": { "$ref": "#/$defs/positionId" }, "uniqueItems": true }
+      }
+    },
+    "position": {
+      "type": "object", "additionalProperties": false,
+      "required": ["身份编号", "人员引用", "所属主体引用", "身份类型", "职务原文", "主体层级", "身份时态", "开始日期", "结束日期", "时效状态", "目标业务相关性", "纳入理由", "核验状态", "可靠性", "证据引用", "复核建议"],
+      "properties": {
+        "身份编号": { "$ref": "#/$defs/positionId" }, "人员引用": { "$ref": "#/$defs/personId" }, "所属主体引用": { "$ref": "#/$defs/entityId" },
+        "身份类型": { "enum": ["法人代表", "登记负责人", "自然人股东", "最终受益人", "实际控制人", "创始人", "联合创始人", "董事长", "CEO", "总裁", "技术负责人", "研发负责人", "工程负责人", "目标业务负责人", "其他核心管理人员"] },
+        "职务原文": { "$ref": "#/$defs/nonEmptyString" }, "主体层级": { "enum": ["目标主体", "直接关联主体", "二跳例外主体"] }, "身份时态": { "enum": ["当前", "历史", "时点不明"] },
+        "开始日期": { "$ref": "#/$defs/dateOrNull" }, "结束日期": { "$ref": "#/$defs/dateOrNull" }, "时效状态": { "enum": ["当前性充分", "当前性待复核", "仅证明历史身份"] },
+        "目标业务相关性": { "enum": ["直接相关", "间接相关", "待判断", "无关"] }, "纳入理由": { "$ref": "#/$defs/nonEmptyString" }, "核验状态": { "$ref": "#/$defs/factStatus" },
+        "可靠性": { "enum": ["高", "中", "低", "待判断"] }, "证据引用": { "type": "array", "items": { "$ref": "#/$defs/evidenceId" }, "uniqueItems": true }, "复核建议": { "type": "string" }
+      }
+    },
+    "evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["证据编号", "来源类型", "标题", "URL或文件路径", "文件日期", "查询日期", "关键原文", "证明范围", "主体引用", "主体关系引用", "人员身份引用", "证据等级", "核验状态", "持续有效说明"],
+      "properties": {
+        "证据编号": { "$ref": "#/$defs/evidenceId" }, "来源类型": { "$ref": "#/$defs/nonEmptyString" }, "标题": { "$ref": "#/$defs/nonEmptyString" },
+        "URL或文件路径": { "$ref": "#/$defs/nonEmptyString" }, "文件日期": { "$ref": "#/$defs/dateOrNull" }, "查询日期": { "$ref": "#/$defs/date" }, "关键原文": { "$ref": "#/$defs/nonEmptyString" },
+        "证明范围": { "type": "array", "items": { "$ref": "#/$defs/nonEmptyString" }, "minItems": 1, "uniqueItems": true },
+        "主体引用": { "type": "array", "items": { "$ref": "#/$defs/entityId" }, "uniqueItems": true }, "主体关系引用": { "type": "array", "items": { "$ref": "#/$defs/relationshipId" }, "uniqueItems": true },
+        "人员身份引用": { "type": "array", "items": { "$ref": "#/$defs/positionId" }, "uniqueItems": true }, "证据等级": { "enum": ["强证据", "较强证据", "线索证据"] },
+        "核验状态": { "$ref": "#/$defs/factStatus" }, "持续有效说明": { "type": "string" }
+      }
+    },
+    "query": {
+      "type": "object", "additionalProperties": false,
+      "required": ["查询编号", "查询对象类型", "查询对象引用", "数据源", "查询词", "查询时间", "访问结果", "命中情况", "命中证据引用", "阻塞原因", "后续动作"],
+      "properties": {
+        "查询编号": { "$ref": "#/$defs/queryId" }, "查询对象类型": { "enum": ["主体", "主体关系", "人员", "人员身份"] }, "查询对象引用": { "type": "string", "pattern": "^(ENT|REL|PER|POS)-[0-9]{3,}$" },
+        "数据源": { "$ref": "#/$defs/nonEmptyString" }, "查询词": { "type": "array", "items": { "$ref": "#/$defs/nonEmptyString" }, "minItems": 1, "uniqueItems": true }, "查询时间": { "$ref": "#/$defs/dateTime" },
+        "访问结果": { "enum": ["成功", "访问受限", "付费墙", "失败"] }, "命中情况": { "enum": ["已发现", "已查询但未发现", "待人工查询", "尚未查询"] },
+        "命中证据引用": { "type": "array", "items": { "$ref": "#/$defs/evidenceId" }, "uniqueItems": true }, "阻塞原因": { "type": "string" }, "后续动作": { "type": "string" }
+      }
+    },
+    "issue": {
+      "type": "object", "additionalProperties": false,
+      "required": ["事项编号", "类型", "说明", "是否关键", "关联对象引用", "状态", "解决说明"],
+      "properties": {
+        "事项编号": { "$ref": "#/$defs/issueId" }, "类型": { "enum": ["输入缺失", "主体歧义", "证据冲突", "访问受限", "付费补证", "时效待复核", "其他"] },
+        "说明": { "$ref": "#/$defs/nonEmptyString" }, "是否关键": { "type": "boolean" }, "关联对象引用": { "$ref": "#/$defs/stringList" }, "状态": { "enum": ["未解决", "已解决", "已接受限制"] }, "解决说明": { "type": "string" }
+      }
+    },
+    "result": {
+      "type": "object", "additionalProperties": false,
+      "required": ["结果编号", "主体引用", "调查进度", "事实核验状态", "人员身份引用", "查询记录引用", "阻塞原因", "复核建议"],
+      "properties": {
+        "结果编号": { "$ref": "#/$defs/resultId" }, "主体引用": { "$ref": "#/$defs/entityId" }, "调查进度": { "enum": ["未开始", "调查中", "待人工查询", "调查完成"] },
+        "事实核验状态": { "$ref": "#/$defs/factStatus" }, "人员身份引用": { "type": "array", "items": { "$ref": "#/$defs/positionId" }, "uniqueItems": true },
+        "查询记录引用": { "type": "array", "items": { "$ref": "#/$defs/queryId" }, "uniqueItems": true }, "阻塞原因": { "$ref": "#/$defs/stringList" }, "复核建议": { "$ref": "#/$defs/stringList" }
+      }
+    },
+    "judgment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["整体状态", "主体总数", "已识别人员数", "已核验身份数", "未解决关键事项", "需要用户确认", "用户可执行动作"],
+      "properties": {
+        "整体状态": { "enum": ["待补充输入", "待确认范围", "调查中", "待审阅", "部分完成", "已完成", "已阻塞"] }, "主体总数": { "type": "integer", "minimum": 0 },
+        "已识别人员数": { "type": "integer", "minimum": 0 }, "已核验身份数": { "type": "integer", "minimum": 0 },
+        "未解决关键事项": { "type": "array", "items": { "$ref": "#/$defs/issueId" }, "uniqueItems": true }, "需要用户确认": { "type": "boolean" }, "用户可执行动作": { "$ref": "#/$defs/stringList" }
+      }
+    },
+    "approval": {
+      "type": "object", "additionalProperties": false,
+      "required": ["确认编号", "确认类型", "确认时间", "用户原文", "关联对象引用"],
+      "properties": {
+        "确认编号": { "$ref": "#/$defs/approvalId" }, "确认类型": { "enum": ["确认范围", "确认结果", "更正", "补充", "接受限制"] },
+        "确认时间": { "$ref": "#/$defs/dateTime" }, "用户原文": { "$ref": "#/$defs/nonEmptyString" }, "关联对象引用": { "$ref": "#/$defs/stringList" }
+      }
+    },
+    "renderMetadata": {
+      "type": "object", "additionalProperties": false,
+      "required": ["状态内容哈希", "渲染器版本", "最近渲染时间"],
+      "properties": { "状态内容哈希": { "type": "string", "pattern": "^$|^[A-F0-9]{64}$" }, "渲染器版本": { "type": "string" }, "最近渲染时间": { "$ref": "#/$defs/dateTimeOrNull" } }
+    }
+  }
+}
