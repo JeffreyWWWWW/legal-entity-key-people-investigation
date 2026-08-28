@@ -1,0 +1,20 @@
+{
+  "name": "jeffrey-legal-research",
+  "interface": {
+    "displayName": "Jeffrey Legal Research"
+  },
+  "plugins": [
+    {
+      "name": "legal-entity-key-people-investigation",
+      "source": {
+        "source": "local",
+        "path": "./plugins/legal-entity-key-people-investigation"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

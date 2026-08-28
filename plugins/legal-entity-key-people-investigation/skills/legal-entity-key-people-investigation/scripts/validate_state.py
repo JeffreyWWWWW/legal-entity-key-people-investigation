@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 from collections import Counter
 from pathlib import Path
@@ -12,7 +13,18 @@ else:
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA_PATH = ROOT / "references/schemas/investigation-state.schema.json"
+
+
+def _windows_long_path(path: Path) -> Path:
+    resolved = path.resolve()
+    if os.name == "nt" and not str(resolved).startswith("\\\\?\\"):
+        return Path(f"\\\\?\\{resolved}")
+    return resolved
+
+
+SCHEMA_PATH = _windows_long_path(
+    ROOT / "references/schemas/investigation-state.schema.json"
+)
 ID_FIELDS = {
     "输入材料": "材料编号",
     "公司主体": "主体编号",

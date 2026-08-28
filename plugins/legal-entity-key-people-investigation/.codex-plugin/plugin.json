@@ -1,0 +1,27 @@
+{
+  "name": "legal-entity-key-people-investigation",
+  "version": "1.0.0",
+  "description": "核验目标法律主体与指定产品或技术主题相关的核心人员，并生成可追溯 JSON 底稿和 Excel 审阅件。",
+  "author": {
+    "name": "Junfei Wang"
+  },
+  "homepage": "https://github.com/JeffreyWWWWW/legal-entity-key-people-investigation",
+  "repository": "https://github.com/JeffreyWWWWW/legal-entity-key-people-investigation",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "法律主体核心人员调查",
+    "shortDescription": "核验主体关系与核心人员并输出可追溯底稿",
+    "longDescription": "结合产品或技术主题，独立核验一个或多个目标法律主体的控制关系、管理层及技术负责人，输出一致的 JSON 调查底稿和 Excel 审阅件。",
+    "developerName": "Junfei Wang",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "调查这些目标主体与指定产品或技术主题相关的核心人员。",
+      "把这份 JSON 或 Excel 输入整理为核心人员调查底稿。",
+      "校验调查 JSON，并生成 Excel 审阅件。"
+    ]
+  }
+}
