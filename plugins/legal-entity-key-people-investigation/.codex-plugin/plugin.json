@@ -1,6 +1,6 @@
 {
   "name": "legal-entity-key-people-investigation",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "核验目标法律主体与指定产品或技术主题相关的核心人员，并生成可追溯 JSON 底稿和 Excel 审阅件。",
   "author": {
     "name": "Junfei Wang"

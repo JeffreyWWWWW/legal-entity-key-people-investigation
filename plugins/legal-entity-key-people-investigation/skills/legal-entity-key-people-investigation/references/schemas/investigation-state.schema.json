@@ -45,7 +45,7 @@
       "type": "object", "additionalProperties": false,
       "required": ["任务编号", "调查基准日", "创建时间", "更新时间", "原始请求"],
       "properties": {
-        "任务编号": { "$ref": "#/$defs/nonEmptyString" }, "调查基准日": { "$ref": "#/$defs/date" },
+        "任务编号": { "$ref": "#/$defs/nonEmptyString" }, "项目名称": { "type": "string" }, "调查基准日": { "$ref": "#/$defs/date" },
         "创建时间": { "$ref": "#/$defs/dateTime" }, "更新时间": { "$ref": "#/$defs/dateTime" }, "原始请求": { "type": "string" }
       }
     },

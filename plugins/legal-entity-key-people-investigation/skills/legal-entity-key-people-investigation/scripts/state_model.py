@@ -4,6 +4,17 @@ import json
 import re
 
 
+WINDOWS_INVALID_FILENAME_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
+WINDOWS_RESERVED_NAMES = {
+    "CON",
+    "PRN",
+    "AUX",
+    "NUL",
+    *(f"COM{number}" for number in range(1, 10)),
+    *(f"LPT{number}" for number in range(1, 10)),
+}
+
+
 def canonical_json(state: dict) -> str:
     return json.dumps(
         state,
@@ -27,6 +38,55 @@ def next_id(records: list[dict], key: str, prefix: str) -> str:
         if (match := pattern.match(str(record.get(key, ""))))
     ]
     return f"{prefix}-{max(suffixes, default=0) + 1:03d}"
+
+
+def sanitize_filename_component(value: str) -> str:
+    cleaned = WINDOWS_INVALID_FILENAME_CHARS.sub("_", value).strip().rstrip(". ")
+    cleaned = re.sub(r"_+", "_", cleaned)
+    if not cleaned:
+        return "未命名项目"
+    if cleaned.upper() in WINDOWS_RESERVED_NAMES:
+        return f"_{cleaned}"
+    return cleaned
+
+
+def chinese_count(value: int) -> str:
+    digits = "零一二三四五六七八九"
+    if value < 10:
+        return digits[value]
+    if value < 20:
+        return "十" + (digits[value % 10] if value % 10 else "")
+    if value < 100:
+        return digits[value // 10] + "十" + (digits[value % 10] if value % 10 else "")
+    return str(value)
+
+
+def delivery_scope(state: dict) -> str:
+    project_name = state.get("任务元数据", {}).get("项目名称", "").strip()
+    if project_name:
+        return sanitize_filename_component(project_name)
+
+    target_ids = state.get("目标主体引用", [])
+    if len(target_ids) == 1:
+        target_id = target_ids[0]
+        for entity in state.get("公司主体", []):
+            if entity.get("主体编号") == target_id:
+                name = entity.get("规范法律名称", "").strip()
+                if name:
+                    return sanitize_filename_component(name)
+    return f"{chinese_count(len(target_ids))}主体"
+
+
+def delivery_filenames(state: dict) -> tuple[str, str]:
+    scope = delivery_scope(state)
+    investigation_date = state.get("任务元数据", {}).get("调查基准日", "")
+    if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", investigation_date):
+        raise ValueError("任务元数据.调查基准日必须为 YYYY-MM-DD")
+    date_token = investigation_date.replace("-", "")
+    return (
+        f"{scope}_法律主体核心人员调查底稿_{date_token}.json",
+        f"{scope}_法律主体核心人员调查审阅件_{date_token}.xlsx",
+    )
 
 
 def derive_overall_status(state: dict) -> str:

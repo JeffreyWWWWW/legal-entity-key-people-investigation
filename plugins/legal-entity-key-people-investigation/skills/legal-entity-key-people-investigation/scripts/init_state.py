@@ -74,6 +74,7 @@ def build_state(args: argparse.Namespace) -> dict:
         "规范版本": "1.0.0",
         "任务元数据": {
             "任务编号": args.task_id,
+            "项目名称": args.project_name,
             "调查基准日": args.as_of,
             "创建时间": args.timestamp,
             "更新时间": args.timestamp,
@@ -120,6 +121,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="初始化法律主体核心人员调查状态")
     parser.add_argument("output", type=Path)
     parser.add_argument("--task-id", required=True)
+    parser.add_argument("--project-name", default="")
     parser.add_argument("--as-of", required=True)
     parser.add_argument("--timestamp", required=True)
     parser.add_argument("--topic", required=True)
