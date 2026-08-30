@@ -20,6 +20,12 @@
 - `PLUGIN_JSON` 为模块级路径，可由测试 monkeypatch，便于验证异常路径。
 - 修改范围仅限 Task 1 文件及本报告。
 
+## Reviewer 修复
+
+- 捕获 `UnicodeError`，将非法 UTF-8 的 `plugin.json` 统一转换为 `ValueError`。
+- 新增非法 UTF-8 元数据测试，覆盖声明的读取异常契约。
+
 ## Concerns
 
 - 当前环境缺少 pytest，因此未能执行计划要求的 pytest 测试；直接行为检查覆盖了计划中的两个断言。
+- Reviewer 修复后的直接行为检查通过，详见追加测试输出。

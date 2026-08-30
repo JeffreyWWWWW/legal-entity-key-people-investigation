@@ -30,3 +30,12 @@ def test_get_skill_version_rejects_invalid_version(tmp_path, monkeypatch):
 
     with pytest.raises(ValueError, match="语义化版本"):
         version_source.get_skill_version()
+
+
+def test_get_skill_version_rejects_invalid_utf8_metadata(tmp_path, monkeypatch):
+    metadata = tmp_path / "plugin.json"
+    metadata.write_bytes(b'{"version":"1.0.1"}\xff')
+    monkeypatch.setattr(version_source, "PLUGIN_JSON", metadata)
+
+    with pytest.raises(ValueError, match="无法读取 Plugin 版本"):
+        version_source.get_skill_version()

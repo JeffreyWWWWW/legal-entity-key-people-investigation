@@ -12,7 +12,7 @@ def get_skill_version() -> str:
     try:
         with PLUGIN_JSON.open(encoding="utf-8") as metadata_file:
             metadata = json.load(metadata_file)
-    except (OSError, json.JSONDecodeError, TypeError) as exc:
+    except (OSError, UnicodeError, json.JSONDecodeError, TypeError) as exc:
         raise ValueError("无法读取 Plugin 版本") from exc
 
     version = metadata.get("version") if isinstance(metadata, dict) else None
