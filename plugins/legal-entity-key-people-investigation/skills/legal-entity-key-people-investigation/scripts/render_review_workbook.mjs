@@ -104,6 +104,7 @@ export function buildOverviewRows(state, hash) {
   return [
     ["状态内容哈希", hash],
     ["规范版本", state["规范版本"]],
+    ["Skill 版本", state["skill_version"]],
     ["任务编号", state["任务元数据"]["任务编号"]],
     ["调查基准日", state["任务元数据"]["调查基准日"]],
     [
@@ -487,7 +488,9 @@ async function main() {
 }
 
 
-main().catch((error) => {
-  process.stderr.write(`${error.message}\n`);
-  process.exitCode = 1;
-});
+if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
+  main().catch((error) => {
+    process.stderr.write(`${error.message}\n`);
+    process.exitCode = 1;
+  });
+}
