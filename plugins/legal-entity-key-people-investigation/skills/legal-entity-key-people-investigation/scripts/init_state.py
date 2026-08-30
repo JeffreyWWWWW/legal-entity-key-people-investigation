@@ -6,8 +6,10 @@ from pathlib import Path
 
 if __package__:
     from .state_model import canonical_json, derive_overall_status, state_hash
+    from .version_source import get_skill_version
 else:
     from state_model import canonical_json, derive_overall_status, state_hash
+    from version_source import get_skill_version
 
 
 SOURCE_TYPES = {
@@ -72,6 +74,7 @@ def build_state(args: argparse.Namespace) -> dict:
 
     state = {
         "规范版本": "1.0.0",
+        "skill_version": get_skill_version(),
         "任务元数据": {
             "任务编号": args.task_id,
             "项目名称": args.project_name,
