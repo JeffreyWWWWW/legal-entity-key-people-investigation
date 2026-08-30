@@ -32,6 +32,8 @@ init_spec.loader.exec_module(init_state)
 
 SCHEMA_PATH = INIT_STATE_PATH.parents[1] / "references" / "schemas" / "investigation-state.schema.json"
 SCHEMA = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+SKILL_PATH = INIT_STATE_PATH.parents[1] / "SKILL.md"
+WORKFLOW_PATH = INIT_STATE_PATH.parents[1] / "references" / "workflow.md"
 
 
 def _build_args():
@@ -75,3 +77,19 @@ def test_schema_rejects_missing_skill_version():
     del invalid["skill_version"]
     errors = list(Draft202012Validator(SCHEMA).iter_errors(invalid))
     assert any("skill_version" in error.message for error in errors)
+
+
+def test_skill_doc_requires_version_banner_and_field_mapping():
+    text = SKILL_PATH.read_text(encoding="utf-8")
+    assert "Skill version: X.Y.Z" in text
+    assert "plugin.json" in text
+    assert "`skill_version`" in text
+    assert "state.json" in text
+
+
+def test_workflow_doc_describes_formal_version_field():
+    text = WORKFLOW_PATH.read_text(encoding="utf-8")
+    assert "skill_version" in text
+    assert "正式 JSON" in text
+    assert "正式 Excel" in text
+    assert "Skill version: X.Y.Z" in text

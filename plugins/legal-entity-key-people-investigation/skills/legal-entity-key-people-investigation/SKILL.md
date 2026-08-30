@@ -10,6 +10,9 @@ description: Use when a user asks to investigate a named company or other legal 
 独立接收目标主体线索和产品或技术主题，建立可追溯的主体关系、核心人员、人员身份、
 证据和查询记录。不得读取或依赖其他 Skill 的内部状态或阶段确认记录。
 
+首次响应的顶部必须先播报 Skill 版本，格式为 `Skill version: X.Y.Z`，其中版本号取自
+`plugins/legal-entity-key-people-investigation/.codex-plugin/plugin.json` 的 `version` 字段。
+
 ## 何时触发
 
 当用户的目标是围绕**指定法律主体**及其**产品、业务或技术主题**，识别或核验与该业务
@@ -66,6 +69,9 @@ Skill 被触发后，正式调查前必须同时取得：
 JSON，再重新校验和渲染。正式交付时按工作流规定的范围和调查日期生成同名范围的 JSON
 底稿与 Excel 审阅件；同一范围、同一调查日期重新生成时覆盖同名文件，不追加随机编号。
 不得把沉默视为确认，也不得自动执行后续工作。
+
+正式 JSON 与正式 Excel 都必须携带同一 `skill_version` 值；它是当前 Skill 版本的语义化
+版本号，也是 `state.json` 中可追溯的版本字段。
 
 ## 支持资源
 
