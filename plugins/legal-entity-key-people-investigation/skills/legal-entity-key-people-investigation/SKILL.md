@@ -12,6 +12,7 @@ description: Use when a user asks to investigate a named company or other legal 
 
 首次响应的顶部必须先播报 Skill 版本，格式为 `Skill 版本：X.Y.Z`，其中实际版本号取自
 `plugins/legal-entity-key-people-investigation/.codex-plugin/plugin.json` 的 `version` 字段。
+同一调查任务的后续回复不重复播报版本，除非用户询问版本或开启新任务。
 
 ## 何时触发
 

@@ -85,6 +85,7 @@ def test_skill_doc_requires_version_banner_and_field_mapping():
     assert "plugin.json" in text
     assert "`skill_version`" in text
     assert "state.json" in text
+    assert "后续回复不重复播报版本" in text
 
 
 def test_workflow_doc_describes_formal_version_field():
@@ -93,3 +94,6 @@ def test_workflow_doc_describes_formal_version_field():
     assert "正式 JSON" in text
     assert "正式 Excel" in text
     assert "Skill 版本：X.Y.Z" in text
+    assert "后续回复不重复输出版本行" in text
+    assert "01-任务概览" in text
+    assert "Skill 版本" in text

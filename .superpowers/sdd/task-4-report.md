@@ -1,6 +1,6 @@
-# Task 4 修复报告
+# Task 4 修复报告（补齐复审缺口）
 
-- 已将 `SKILL.md`、`references/workflow.md` 和 `tests/test_skill_version_reporting.py` 中的版本播报格式统一为 `Skill 版本：X.Y.Z`。
-- 已补充说明：实际版本号从 `plugins/legal-entity-key-people-investigation/.codex-plugin/plugin.json` 的 `version` 字段读取。
-- 已保持“首次响应顶部播报”的语义要求不变。
-- 验证计划：运行直接检查与 `git diff --check`，并提交修复 commit。
+- 已在 `SKILL.md` 明确：同一调查任务的后续回复不重复播报版本，除非用户询问版本或开启新任务。
+- 已在 `workflow.md` 明确：同一调查任务不重复输出版本行；Excel 的 `01-任务概览` 工作表应显示 `Skill 版本` 标签，其值取自 `skill_version`。
+- 已扩展 `tests/test_skill_version_reporting.py`，覆盖“不重复播报”和“任务概览”两项断言。
+- 下一步：运行 `git diff --check` 并提交修复。
