@@ -81,7 +81,7 @@ def test_schema_rejects_missing_skill_version():
 
 def test_skill_doc_requires_version_banner_and_field_mapping():
     text = SKILL_PATH.read_text(encoding="utf-8")
-    assert "Skill version: X.Y.Z" in text
+    assert "Skill 版本：X.Y.Z" in text
     assert "plugin.json" in text
     assert "`skill_version`" in text
     assert "state.json" in text
@@ -92,4 +92,4 @@ def test_workflow_doc_describes_formal_version_field():
     assert "skill_version" in text
     assert "正式 JSON" in text
     assert "正式 Excel" in text
-    assert "Skill version: X.Y.Z" in text
+    assert "Skill 版本：X.Y.Z" in text

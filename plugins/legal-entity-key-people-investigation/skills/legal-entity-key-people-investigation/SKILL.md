@@ -10,7 +10,7 @@ description: Use when a user asks to investigate a named company or other legal 
 独立接收目标主体线索和产品或技术主题，建立可追溯的主体关系、核心人员、人员身份、
 证据和查询记录。不得读取或依赖其他 Skill 的内部状态或阶段确认记录。
 
-首次响应的顶部必须先播报 Skill 版本，格式为 `Skill version: X.Y.Z`，其中版本号取自
+首次响应的顶部必须先播报 Skill 版本，格式为 `Skill 版本：X.Y.Z`，其中实际版本号取自
 `plugins/legal-entity-key-people-investigation/.codex-plugin/plugin.json` 的 `version` 字段。
 
 ## 何时触发

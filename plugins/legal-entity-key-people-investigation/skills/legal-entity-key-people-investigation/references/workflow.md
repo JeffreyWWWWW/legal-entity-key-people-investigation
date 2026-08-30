@@ -67,4 +67,5 @@
 
 - `skill_version` 是正式 JSON、正式 Excel 与内部 `state.json` 的统一版本字段。
 - 该字段记录当前 Skill 的语义化版本号，用于追溯交付物生成时所依据的 Skill 版本。
-- 首次响应时应在消息顶部先输出 `Skill version: X.Y.Z`，再继续调查内容。
+- 首次响应时应在消息顶部先输出 `Skill 版本：X.Y.Z`，再继续调查内容；其中实际版本号
+  读取 `plugin.json` 的 `version` 字段。
