@@ -1,7 +1,7 @@
 {
-  "name": "jeffrey-legal-research",
+  "name": "legal-entity-key-people-investigation",
   "interface": {
-    "displayName": "Jeffrey Legal Research"
+    "displayName": "Legal Entity Key People Investigation"
   },
   "plugins": [
     {

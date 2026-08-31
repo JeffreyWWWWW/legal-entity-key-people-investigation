@@ -25,7 +25,7 @@ GitHub 仓库：https://github.com/JeffreyWWWWW/legal-entity-key-people-investig
 
 ```powershell
 codex plugin marketplace add JeffreyWWWWW/legal-entity-key-people-investigation --ref main
-codex plugin add legal-entity-key-people-investigation@jeffrey-legal-research
+codex plugin add legal-entity-key-people-investigation@legal-entity-key-people-investigation
 ```
 
 安装或更新后，请新建一个 Codex 任务，让新任务加载当前 Plugin 版本。
@@ -35,8 +35,8 @@ codex plugin add legal-entity-key-people-investigation@jeffrey-legal-research
 先刷新 Marketplace，再重新安装 Plugin：
 
 ```powershell
-codex plugin marketplace upgrade jeffrey-legal-research
-codex plugin add legal-entity-key-people-investigation@jeffrey-legal-research
+codex plugin marketplace upgrade legal-entity-key-people-investigation
+codex plugin add legal-entity-key-people-investigation@legal-entity-key-people-investigation
 ```
 
 更新完成后，请新建一个 Codex 任务，让新任务加载最新的 Skill 触发规则与调查流程。
@@ -48,7 +48,7 @@ codex plugin add legal-entity-key-people-investigation@jeffrey-legal-research
 ```powershell
 git clone https://github.com/JeffreyWWWWW/legal-entity-key-people-investigation.git
 codex plugin marketplace add <local-repository-path>
-codex plugin add legal-entity-key-people-investigation@jeffrey-legal-research
+codex plugin add legal-entity-key-people-investigation@legal-entity-key-people-investigation
 ```
 
 `<local-repository-path>` 是占位符，请替换为克隆后的实际目录。
