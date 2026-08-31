@@ -8,6 +8,7 @@ tests/*
 !tests/test_tavily_search.py
 assets/
 docs/superpowers/
+.superpowers/
 
 # Runtime output
 working/
