@@ -98,6 +98,9 @@
       "type": "object", "additionalProperties": false,
       "required": ["身份编号", "人员引用", "所属主体引用", "身份类型", "职务原文", "主体层级", "身份时态", "开始日期", "结束日期", "时效状态", "目标业务相关性", "纳入理由", "核验状态", "可靠性", "证据引用", "复核建议"],
       "properties": {
+        "关联路径引用": { "type": "array", "items": { "$ref": "#/$defs/relationshipId" }, "uniqueItems": true },
+        "证据直接记载主体": { "$ref": "#/$defs/entityId" },
+        "是否直接任职证据": { "type": "boolean" },
         "身份编号": { "$ref": "#/$defs/positionId" }, "人员引用": { "$ref": "#/$defs/personId" }, "所属主体引用": { "$ref": "#/$defs/entityId" },
         "身份类型": { "enum": ["法人代表", "登记负责人", "自然人股东", "最终受益人", "实际控制人", "创始人", "联合创始人", "董事长", "CEO", "总裁", "技术负责人", "研发负责人", "工程负责人", "目标业务负责人", "其他核心管理人员"] },
         "职务原文": { "$ref": "#/$defs/nonEmptyString" }, "主体层级": { "enum": ["目标主体", "直接关联主体", "二跳例外主体"] }, "身份时态": { "enum": ["当前", "历史", "时点不明"] },
@@ -110,6 +113,10 @@
       "type": "object", "additionalProperties": false,
       "required": ["证据编号", "来源类型", "标题", "URL或文件路径", "文件日期", "查询日期", "关键原文", "证明范围", "主体引用", "主体关系引用", "人员身份引用", "证据等级", "核验状态", "持续有效说明"],
       "properties": {
+        "来源类别": { "enum": ["登记机关", "监管文件", "公司官网", "官方公告", "官方产品文件", "行业媒体", "新闻媒体", "第三方数据库", "搜索服务", "用户材料", "其他"] },
+        "发布主体": { "type": "string" },
+        "来源标题": { "type": "string" },
+        "原始URL": { "type": "string" },
         "证据编号": { "$ref": "#/$defs/evidenceId" }, "来源类型": { "$ref": "#/$defs/nonEmptyString" }, "标题": { "$ref": "#/$defs/nonEmptyString" },
         "URL或文件路径": { "$ref": "#/$defs/nonEmptyString" }, "文件日期": { "$ref": "#/$defs/dateOrNull" }, "查询日期": { "$ref": "#/$defs/date" }, "关键原文": { "$ref": "#/$defs/nonEmptyString" },
         "证明范围": { "type": "array", "items": { "$ref": "#/$defs/nonEmptyString" }, "minItems": 1, "uniqueItems": true },
@@ -122,6 +129,12 @@
       "type": "object", "additionalProperties": false,
       "required": ["查询编号", "查询对象类型", "查询对象引用", "数据源", "查询维度", "是否独立核验", "查询词", "查询时间", "访问结果", "命中情况", "命中证据引用", "阻塞原因", "后续动作"],
       "properties": {
+        "数据源类型": { "enum": ["登记机关", "监管文件", "公司官网", "官方公告", "媒体", "第三方数据库", "搜索服务", "用户材料", "其他"] },
+        "实际访问位置": { "type": "string" },
+        "访问内容摘要": { "type": "string" },
+        "未命中范围": { "type": "string" },
+        "候选URL": { "type": "string" },
+        "原始来源URL": { "type": "string" },
         "查询编号": { "$ref": "#/$defs/queryId" }, "查询对象类型": { "enum": ["主体", "主体关系", "人员", "人员身份"] }, "查询对象引用": { "type": "string", "pattern": "^(ENT|REL|PER|POS)-[0-9]{3,}$" },
         "数据源": { "$ref": "#/$defs/nonEmptyString" }, "查询维度": { "enum": ["主体身份", "主体关系", "控制与所有权", "最高管理层", "技术与研发负责人", "目标业务负责人"] }, "是否独立核验": { "type": "boolean" }, "查询词": { "type": "array", "items": { "$ref": "#/$defs/nonEmptyString" }, "minItems": 1, "uniqueItems": true }, "查询时间": { "$ref": "#/$defs/dateTime" },
         "访问结果": { "enum": ["成功", "访问受限", "付费墙", "失败"] }, "命中情况": { "enum": ["已发现", "已查询但未发现", "待人工查询", "尚未查询"] },

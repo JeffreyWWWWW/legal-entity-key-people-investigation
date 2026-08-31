@@ -45,10 +45,48 @@ REQUIRED_COMPLETION_QUERY_DIMENSIONS = {
     "最高管理层",
     "技术与研发负责人",
 }
+GENERIC_SOURCES = {"原始官网、监管文件或公开登记入口", "原始官网、监管文件或公开登记入口等"}
+INSTITUTION_NAMES = {"Vanguard", "BlackRock", "Morgan Stanley", "贝莱德", "先锋集团", "摩根士丹利"}
+EVIDENCE_LEVELS = {"线索证据": 0, "较强证据": 1, "强证据": 2}
 
 
 class ValidationError(ValueError):
     pass
+
+
+def validate_query_quality(query: dict) -> None:
+    """Validate provenance fields when present; legacy records remain migratable."""
+    if not query.get("是否独立核验"):
+        return
+    source = str(query.get("数据源", "")).strip()
+    if source in GENERIC_SOURCES:
+        raise ValidationError("独立核验不得使用泛化占位数据源")
+    if query.get("数据源类型") in {"搜索服务", "用户材料", "搜索摘要"}:
+        raise ValidationError("搜索服务、用户材料和搜索摘要不得标为独立核验")
+    if not str(query.get("实际访问位置", "")).strip() or not str(query.get("访问内容摘要", "")).strip():
+        raise ValidationError("独立核验必须填写实际访问位置和访问内容摘要")
+    if query.get("命中情况") == "已查询但未发现" and not str(query.get("未命中范围", "")).strip():
+        raise ValidationError("已查询但未发现必须填写未命中范围")
+
+
+def validate_evidence_quality(evidence: dict) -> None:
+    category = evidence.get("来源类别")
+    level = evidence.get("证据等级")
+    if category in {"行业媒体", "新闻媒体", "第三方数据库", "搜索服务"} and level in {"较强证据", "强证据"}:
+        raise ValidationError(f"{category}最高只能标为线索证据")
+
+
+def validate_position_quality(position: dict, target_ids: set[str], relationship_ids: set[str]) -> None:
+    name = str(position.get("规范姓名", "")).strip()
+    if name in INSTITUTION_NAMES:
+        raise ValidationError("机构名称不得写入自然人集合")
+    if "所属主体引用" in position:
+        direct_subject = position.get("证据直接记载主体")
+        if direct_subject and direct_subject != position.get("所属主体引用"):
+            if position.get("所属主体引用") in target_ids and not position.get("关联路径引用"):
+                raise ValidationError("证据直接记载主体与所属主体不一致且缺少关联路径")
+        if position.get("所属主体引用") in target_ids and position.get("主体层级") != "目标主体":
+            raise ValidationError("目标主体身份的主体层级不一致")
 
 
 def _validate_schema(state: dict) -> None:
@@ -234,6 +272,7 @@ def _validate_expansion_scope(state: dict, indexes: dict) -> None:
 
 def _validate_query_results(state: dict, indexes: dict) -> None:
     for query in state["查询记录"]:
+        validate_query_quality(query)
         if query["命中情况"] == "已查询但未发现" and query["访问结果"] != "成功":
             raise ValidationError(f"{query['查询编号']}未成功访问时不得记录已查询但未发现")
         if query["命中情况"] == "已发现" and not query["命中证据引用"]:
@@ -354,6 +393,14 @@ def validate_state(state: dict) -> None:
     _validate_position_evidence(state, indexes)
     _validate_expansion_scope(state, indexes)
     _validate_query_results(state, indexes)
+    relationship_ids = set(indexes["主体关系"])
+    target_ids = set(state["目标主体引用"])
+    for position in state["人员身份"]:
+        validate_position_quality(position, target_ids, relationship_ids)
+    for person in state["核心人员"]:
+        validate_position_quality(person, target_ids, relationship_ids)
+    for evidence in state["证据记录"]:
+        validate_evidence_quality(evidence)
     _validate_summary(state)
     stored_hash = state["渲染元数据"]["状态内容哈希"]
     if stored_hash and stored_hash != state_hash(state):

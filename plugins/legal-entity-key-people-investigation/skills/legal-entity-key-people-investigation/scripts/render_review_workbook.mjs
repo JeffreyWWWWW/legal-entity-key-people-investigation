@@ -6,13 +6,14 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 
-const RENDERER_VERSION = "1.0.0";
+const RENDERER_VERSION = "1.1.0";
 const SHEET_NAMES = [
   "01-任务概览",
   "02-主体关系",
   "03-核心人员",
   "04-证据记录",
   "05-查询与缺口",
+  "06-覆盖矩阵",
 ];
 const COLORS = {
   charcoal: "#263238",
@@ -101,6 +102,8 @@ export function buildOverviewRows(state, hash) {
   const entities = new Map(
     state["公司主体"].map((entity) => [entity["主体编号"], entity]),
   );
+  const independentQueries = state["查询记录"].filter((query) => query["是否独立核验"]);
+  const concludedQueries = independentQueries.filter((query) => ["已发现", "已查询但未发现"].includes(query["命中情况"]));
   return [
     ["状态内容哈希", hash],
     ["规范版本", state["规范版本"]],
@@ -131,6 +134,8 @@ export function buildOverviewRows(state, hash) {
     ["主体总数", judgment["主体总数"]],
     ["已识别人员数", judgment["已识别人员数"]],
     ["已核验身份数", judgment["已核验身份数"]],
+    ["主体覆盖率", `${state["目标主体引用"].length ? Math.round((new Set(state["主体调查结果"].filter((result) => result["调查进度"] === "调查完成").map((result) => result["主体引用"])).size / state["目标主体引用"].length) * 100) : 0}%`],
+    ["角色结论率", `${independentQueries.length ? Math.round((concludedQueries.length / independentQueries.length) * 100) : 0}%`],
     ["未解决关键事项", join(judgment["未解决关键事项"])],
     ["需要用户确认", judgment["需要用户确认"] ? "是" : "否"],
     ["用户可执行动作", join(judgment["用户可执行动作"])],
@@ -197,9 +202,10 @@ export function buildPeopleRows(state, indexes) {
 export function buildEvidenceRows(state) {
   return [...state["证据记录"]].sort(byId("证据编号")).map((evidence) => [
     evidence["证据编号"],
-    evidence["来源类型"],
-    evidence["标题"],
-    evidence["URL或文件路径"],
+    evidence["来源类别"] ?? evidence["来源类型"],
+    evidence["发布主体"] ?? "",
+    evidence["来源标题"] ?? evidence["标题"],
+    evidence["原始URL"] ?? evidence["URL或文件路径"],
     evidence["文件日期"] ?? "",
     evidence["查询日期"],
     evidence["证据等级"],
@@ -220,11 +226,11 @@ export function buildQueryAndIssueRows(state) {
     query["查询编号"],
     query["查询对象类型"],
     query["查询对象引用"],
-    query["数据源"],
+    query["数据源类型"] ? `${query["数据源"]} / ${query["数据源类型"]}` : query["数据源"],
     query["查询维度"],
     query["是否独立核验"] ? "是" : "否",
     join(query["查询词"]),
-    localWallClockDate(query["查询时间"]),
+    query["查询时间"],
     query["访问结果"],
     query["命中情况"],
     join(query["命中证据引用"]),
@@ -248,6 +254,16 @@ export function buildQueryAndIssueRows(state) {
     issue["解决说明"],
   ]);
   return [...queryRows, ...issueRows];
+}
+
+export function buildCoverageRows(state) {
+  const dimensions = ["主体身份", "主体关系", "控制与所有权", "创始人", "最高管理层", "技术与研发负责人", "目标业务负责人"];
+  const names = new Map(state["公司主体"].map((entity) => [entity["主体编号"], entity["规范法律名称"]]));
+  return state["目标主体引用"].sort().flatMap((entityId) => dimensions.map((dimension) => {
+    const queries = state["查询记录"].filter((query) => query["查询对象引用"] === entityId && query["查询维度"] === dimension && query["是否独立核验"]);
+    const concluded = queries.some((query) => ["已发现", "已查询但未发现"].includes(query["命中情况"]));
+    return [entityId, names.get(entityId) ?? "", dimension, concluded ? "已形成独立结论" : "缺口", queries.map((query) => query["查询编号"]).join("；")];
+  }));
 }
 
 
@@ -382,7 +398,7 @@ async function patchFrozenPanes(outputPath, nodeModules) {
   const jszipModule = await import(pathToFileURL(requireFromBundle.resolve("jszip")).href);
   const JSZip = jszipModule.default;
   const zip = await JSZip.loadAsync(await fs.readFile(outputPath));
-  const freezeRows = [1, 4, 4, 4, 4];
+  const freezeRows = [1, 4, 4, 4, 4, 4];
   for (let index = 0; index < freezeRows.length; index += 1) {
     const entry = `xl/worksheets/sheet${index + 1}.xml`;
     const file = zip.file(entry);
@@ -457,9 +473,9 @@ async function main() {
   writeDetailSheet(
     sheets[3],
     "证据记录",
-    ["证据编号", "来源类型", "标题", "URL或文件路径", "文件日期", "查询日期", "证据等级", "核验状态", "证明范围", "主体引用", "关系引用", "身份引用", "关键原文", "持续有效说明"],
+    ["证据编号", "来源类别", "发布主体", "来源标题", "原始URL", "文件日期", "查询日期", "证据等级", "核验状态", "证明范围", "主体引用", "关系引用", "身份引用", "关键原文", "持续有效说明"],
     buildEvidenceRows(state, indexes),
-    [13, 20, 30, 42, 14, 14, 14, 14, 24, 18, 18, 18, 50, 36],
+    [13, 18, 20, 30, 42, 14, 14, 14, 14, 24, 18, 18, 18, 50, 36],
     "EvidenceTable",
     "H",
     { rowHeight: 64 },
@@ -473,6 +489,15 @@ async function main() {
     "QueryIssueTable",
     "K",
     { dateTimeColumn: "I" },
+  );
+  writeDetailSheet(
+    sheets[5],
+    "主体覆盖矩阵",
+    ["主体编号", "规范法律名称", "调查维度", "结论状态", "查询引用"],
+    buildCoverageRows(state),
+    [14, 32, 24, 20, 24],
+    "CoverageMatrixTable",
+    "D",
   );
 
   await fs.mkdir(path.dirname(args.outputPath), { recursive: true });
