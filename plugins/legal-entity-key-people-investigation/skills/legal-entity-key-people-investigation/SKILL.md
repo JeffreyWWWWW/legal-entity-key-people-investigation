@@ -60,7 +60,24 @@ Skill 被触发后，正式调查前必须同时取得：
 - 不使用智慧芽或其他专利数据库。
 - 不查询、筛选或分析专利，不验证人员是否为发明人或申请人，不生成专利检索式。
 
+## 可选 Tavily 检索
+
+环境中存在 `TAVILY_API_KEY` 时，可用
+`python scripts/tavily_search.py "<具体查询词>"` 批量发现候选网页；未配置或调用失败时，
+继续使用可用的浏览器或人工检索方式。Tavily 输出只用于建立线索和候选 URL，不属于独立
+核验；需要采用其内容时，必须访问候选 URL 的原始来源并按证据规则另建证据。
+
+不要把 API Key 作为检索脚本参数，也不要写入状态 JSON、查询记录、日志或交付物。完整
+参数和结果处理规则见
+[Tavily 检索说明](references/tavily-search.md)。
+
 ## 结果门槛
+
+### 调查完成门槛
+
+不得以输入结构化代替外部调查。输入材料只能建立候选主体和线索；只有按工作流完成必要
+查询维度、保存原始来源证据并通过业务校验后，主体结果才能标记为调查完成。没有检出人员
+不等于没有开展调查，必须保存各人员角色维度的真实查询和未命中结果。
 
 将自然语言、JSON、Excel 和辅助材料规范化为
 `working/legal-entity-key-people-investigation/state.json`。JSON 是唯一事实底稿；Excel 只从
@@ -78,4 +95,5 @@ JSON，再重新校验和渲染。正式交付时按工作流规定的范围和�
 
 - 接收、调查、保存和交付流程见[工作流](references/workflow.md)。
 - 人员范围、主体扩展和证据证明边界见[证据规则](references/evidence-rules.md)。
+- 配置 Tavily 或使用检索脚本时见[Tavily 检索说明](references/tavily-search.md)。
 - 标准状态结构见[调查状态 Schema](references/schemas/investigation-state.schema.json)。

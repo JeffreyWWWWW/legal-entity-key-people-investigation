@@ -120,10 +120,10 @@
     },
     "query": {
       "type": "object", "additionalProperties": false,
-      "required": ["查询编号", "查询对象类型", "查询对象引用", "数据源", "查询词", "查询时间", "访问结果", "命中情况", "命中证据引用", "阻塞原因", "后续动作"],
+      "required": ["查询编号", "查询对象类型", "查询对象引用", "数据源", "查询维度", "是否独立核验", "查询词", "查询时间", "访问结果", "命中情况", "命中证据引用", "阻塞原因", "后续动作"],
       "properties": {
         "查询编号": { "$ref": "#/$defs/queryId" }, "查询对象类型": { "enum": ["主体", "主体关系", "人员", "人员身份"] }, "查询对象引用": { "type": "string", "pattern": "^(ENT|REL|PER|POS)-[0-9]{3,}$" },
-        "数据源": { "$ref": "#/$defs/nonEmptyString" }, "查询词": { "type": "array", "items": { "$ref": "#/$defs/nonEmptyString" }, "minItems": 1, "uniqueItems": true }, "查询时间": { "$ref": "#/$defs/dateTime" },
+        "数据源": { "$ref": "#/$defs/nonEmptyString" }, "查询维度": { "enum": ["主体身份", "主体关系", "控制与所有权", "最高管理层", "技术与研发负责人", "目标业务负责人"] }, "是否独立核验": { "type": "boolean" }, "查询词": { "type": "array", "items": { "$ref": "#/$defs/nonEmptyString" }, "minItems": 1, "uniqueItems": true }, "查询时间": { "$ref": "#/$defs/dateTime" },
         "访问结果": { "enum": ["成功", "访问受限", "付费墙", "失败"] }, "命中情况": { "enum": ["已发现", "已查询但未发现", "待人工查询", "尚未查询"] },
         "命中证据引用": { "type": "array", "items": { "$ref": "#/$defs/evidenceId" }, "uniqueItems": true }, "阻塞原因": { "type": "string" }, "后续动作": { "type": "string" }
       }

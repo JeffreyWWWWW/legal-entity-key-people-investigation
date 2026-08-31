@@ -221,6 +221,8 @@ export function buildQueryAndIssueRows(state) {
     query["查询对象类型"],
     query["查询对象引用"],
     query["数据源"],
+    query["查询维度"],
+    query["是否独立核验"] ? "是" : "否",
     join(query["查询词"]),
     localWallClockDate(query["查询时间"]),
     query["访问结果"],
@@ -234,6 +236,8 @@ export function buildQueryAndIssueRows(state) {
     issue["事项编号"],
     issue["类型"],
     join(issue["关联对象引用"]),
+    "",
+    "",
     "",
     "",
     "",
@@ -463,12 +467,12 @@ async function main() {
   writeDetailSheet(
     sheets[4],
     "查询记录与调查缺口",
-    ["记录类型", "编号", "对象/事项类型", "对象引用", "数据源", "查询词", "查询时间", "访问/关键性", "命中/状态", "证据引用", "阻塞原因/说明", "后续动作/解决说明"],
+    ["记录类型", "编号", "对象/事项类型", "对象引用", "数据源", "查询维度", "独立核验", "查询词", "查询时间", "访问/关键性", "命中/状态", "证据引用", "阻塞原因/说明", "后续动作/解决说明"],
     buildQueryAndIssueRows(state, indexes),
-    [12, 13, 18, 18, 24, 30, 24, 16, 20, 18, 42, 42],
+    [12, 13, 18, 18, 24, 18, 12, 30, 24, 16, 20, 18, 42, 42],
     "QueryIssueTable",
-    "I",
-    { dateTimeColumn: "G" },
+    "K",
+    { dateTimeColumn: "I" },
   );
 
   await fs.mkdir(path.dirname(args.outputPath), { recursive: true });

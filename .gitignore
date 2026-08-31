@@ -3,6 +3,9 @@
 
 # Private development files excluded from the shared skill package
 tests/
+!tests/
+tests/*
+!tests/test_tavily_search.py
 assets/
 docs/superpowers/
 

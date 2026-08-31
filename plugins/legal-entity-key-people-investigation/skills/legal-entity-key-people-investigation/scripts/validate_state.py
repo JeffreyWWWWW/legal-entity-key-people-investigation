@@ -38,6 +38,13 @@ ID_FIELDS = {
     "用户确认记录": "确认编号",
 }
 HIGH_RISK_IDENTITIES = {"法人代表", "登记负责人", "自然人股东", "最终受益人", "实际控制人"}
+REQUIRED_COMPLETION_QUERY_DIMENSIONS = {
+    "主体身份",
+    "主体关系",
+    "控制与所有权",
+    "最高管理层",
+    "技术与研发负责人",
+}
 
 
 class ValidationError(ValueError):
@@ -267,13 +274,50 @@ def _validate_query_results(state: dict, indexes: dict) -> None:
                 raise ValidationError(
                     f"{query['查询编号']}查询对象与结果主体不匹配：{entity_id}"
                 )
+        progress = result["调查进度"]
+        fact_status = result["事实核验状态"]
+        verified_positions = [
+            indexes["人员身份"][position_id]
+            for position_id in result["人员身份引用"]
+            if indexes["人员身份"][position_id]["核验状态"] == "已核验"
+        ]
+        if progress != "调查完成" and fact_status in {"已核验", "部分核验", "未发现"}:
+            raise ValidationError(
+                f"{result['结果编号']}调查进度为{progress}时不得标记为{fact_status}"
+            )
+        if progress != "调查完成":
+            continue
+
+        if fact_status == "已核验" and not verified_positions:
+            raise ValidationError(f"{result['结果编号']}已核验但没有已核验人员身份")
+        if fact_status == "部分核验" and not verified_positions:
+            raise ValidationError(f"{result['结果编号']}部分核验但没有已核验人员身份")
+        independent_queries = [query for query in queries if query["是否独立核验"]]
+        if not independent_queries:
+            raise ValidationError(f"{result['结果编号']}调查完成但没有独立核验查询")
+        covered_dimensions = {
+            query["查询维度"]
+            for query in independent_queries
+            if query["访问结果"] == "成功"
+            and query["命中情况"] in {"已发现", "已查询但未发现"}
+        }
+        missing_dimensions = sorted(REQUIRED_COMPLETION_QUERY_DIMENSIONS - covered_dimensions)
+        if missing_dimensions:
+            raise ValidationError(
+                f"{result['结果编号']}调查完成但查询维度不足：{'、'.join(missing_dimensions)}"
+            )
         if result["事实核验状态"] != "未发现":
             continue
-        if not any(
-            query["访问结果"] == "成功" and query["命中情况"] == "已查询但未发现"
-            for query in queries
-        ):
-            raise ValidationError("未发现必须有对应查询记录")
+        people_dimensions = {"控制与所有权", "最高管理层", "技术与研发负责人"}
+        no_hit_dimensions = {
+            query["查询维度"]
+            for query in independent_queries
+            if query["查询维度"] in people_dimensions
+            and query["访问结果"] == "成功"
+            and query["命中情况"] == "已查询但未发现"
+        }
+        if no_hit_dimensions != people_dimensions:
+            raise ValidationError("未发现必须覆盖全部人员查询维度并分别记录成功未命中")
 
 
 def _validate_summary(state: dict) -> None:

@@ -45,7 +45,7 @@ def _build_args():
 
 
 def test_get_skill_version_matches_plugin_json():
-    assert version_source.get_skill_version() == "1.0.1"
+    assert version_source.get_skill_version() == "1.1.0"
 
 
 def test_get_skill_version_rejects_invalid_version(tmp_path, monkeypatch):
