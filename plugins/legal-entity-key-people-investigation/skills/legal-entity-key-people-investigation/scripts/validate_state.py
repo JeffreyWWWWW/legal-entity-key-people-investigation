@@ -42,6 +42,7 @@ REQUIRED_COMPLETION_QUERY_DIMENSIONS = {
     "主体身份",
     "主体关系",
     "控制与所有权",
+    "创始人",
     "最高管理层",
     "技术与研发负责人",
 }

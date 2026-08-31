@@ -16,6 +16,9 @@ def migrate_state(state: dict) -> dict:
         query.setdefault("未命中范围", "")
         query.setdefault("候选URL", "")
         query.setdefault("原始来源URL", "")
+        if query.get("是否独立核验") and not query.get("实际访问位置"):
+            query["是否独立核验"] = False
+            query["后续动作"] = (query.get("后续动作", "") + "；迁移后待补充实际访问位置和访问摘要").strip("；")
     for position in result.get("人员身份", []):
         position.setdefault("关联路径引用", [])
         position.setdefault("证据直接记载主体", position.get("所属主体引用", ""))
@@ -25,6 +28,8 @@ def migrate_state(state: dict) -> dict:
         evidence.setdefault("发布主体", "")
         evidence.setdefault("来源标题", evidence.get("标题", ""))
         evidence.setdefault("原始URL", evidence.get("URL或文件路径", ""))
+        if evidence.get("来源类别") == "其他":
+            evidence["证据等级"] = "线索证据"
     return result
 
 

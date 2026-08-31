@@ -102,7 +102,7 @@ export function buildOverviewRows(state, hash) {
   const entities = new Map(
     state["公司主体"].map((entity) => [entity["主体编号"], entity]),
   );
-  const independentQueries = state["查询记录"].filter((query) => query["是否独立核验"]);
+  const independentQueries = (state["查询记录"] ?? []).filter((query) => query["是否独立核验"]);
   const concludedQueries = independentQueries.filter((query) => ["已发现", "已查询但未发现"].includes(query["命中情况"]));
   return [
     ["状态内容哈希", hash],
@@ -134,7 +134,7 @@ export function buildOverviewRows(state, hash) {
     ["主体总数", judgment["主体总数"]],
     ["已识别人员数", judgment["已识别人员数"]],
     ["已核验身份数", judgment["已核验身份数"]],
-    ["主体覆盖率", `${state["目标主体引用"].length ? Math.round((new Set(state["主体调查结果"].filter((result) => result["调查进度"] === "调查完成").map((result) => result["主体引用"])).size / state["目标主体引用"].length) * 100) : 0}%`],
+    ["主体覆盖率", `${state["目标主体引用"].length ? Math.round((new Set((state["主体调查结果"] ?? []).filter((result) => result["调查进度"] === "调查完成").map((result) => result["主体引用"])).size / state["目标主体引用"].length) * 100) : 0}%`],
     ["角色结论率", `${independentQueries.length ? Math.round((concludedQueries.length / independentQueries.length) * 100) : 0}%`],
     ["未解决关键事项", join(judgment["未解决关键事项"])],
     ["需要用户确认", judgment["需要用户确认"] ? "是" : "否"],
@@ -236,6 +236,9 @@ export function buildQueryAndIssueRows(state) {
     join(query["命中证据引用"]),
     query["阻塞原因"],
     query["后续动作"],
+    query["实际访问位置"] ?? "",
+    query["访问内容摘要"] ?? "",
+    query["未命中范围"] ?? "",
   ]);
   const issueRows = [...state["冲突与待确认项"]].sort(byId("事项编号")).map((issue) => [
     "缺口",
@@ -252,6 +255,9 @@ export function buildQueryAndIssueRows(state) {
     "",
     issue["说明"],
     issue["解决说明"],
+    "",
+    "",
+    "",
   ]);
   return [...queryRows, ...issueRows];
 }
@@ -483,9 +489,9 @@ async function main() {
   writeDetailSheet(
     sheets[4],
     "查询记录与调查缺口",
-    ["记录类型", "编号", "对象/事项类型", "对象引用", "数据源", "查询维度", "独立核验", "查询词", "查询时间", "访问/关键性", "命中/状态", "证据引用", "阻塞原因/说明", "后续动作/解决说明"],
+    ["记录类型", "编号", "对象/事项类型", "对象引用", "数据源", "查询维度", "独立核验", "查询词", "查询时间", "访问/关键性", "命中/状态", "证据引用", "阻塞原因/说明", "后续动作/解决说明", "实际访问位置", "访问内容摘要", "未命中范围"],
     buildQueryAndIssueRows(state, indexes),
-    [12, 13, 18, 18, 24, 18, 12, 30, 24, 16, 20, 18, 42, 42],
+    [12, 13, 18, 18, 24, 18, 12, 30, 24, 16, 20, 18, 42, 42, 42, 42, 32],
     "QueryIssueTable",
     "K",
     { dateTimeColumn: "I" },
