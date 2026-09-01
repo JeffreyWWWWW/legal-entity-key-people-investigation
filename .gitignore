@@ -7,6 +7,10 @@ tests/
 tests/*
 !tests/test_tavily_search.py
 !tests/test_migrate_state.py
+!tests/test_completion_gates.py
+!tests/fixtures/
+tests/fixtures/*
+!tests/fixtures/minimal-valid-state.json
 assets/
 # Local Superpowers planning documents must not be published.
 docs/superpowers/
