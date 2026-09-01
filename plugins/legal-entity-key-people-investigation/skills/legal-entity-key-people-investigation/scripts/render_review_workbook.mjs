@@ -264,11 +264,65 @@ export function buildQueryAndIssueRows(state) {
 
 export function buildCoverageRows(state) {
   const dimensions = ["主体身份", "主体关系", "控制与所有权", "创始人", "最高管理层", "技术与研发负责人", "目标业务负责人"];
+  const proofScopesByDimension = new Map([
+    ["主体身份", new Set(["主体身份"])],
+    ["控制与所有权", new Set(["控制与所有权", "自然人股东", "最终受益人", "实际控制人", "母公司", "子公司"])],
+    ["创始人", new Set(["创始人", "联合创始人"])],
+    ["最高管理层", new Set(["最高管理层", "董事长", "CEO", "总裁", "其他核心管理人员"])],
+    ["技术与研发负责人", new Set(["技术与研发负责人", "技术负责人", "研发负责人", "工程负责人"])],
+    ["目标业务负责人", new Set(["目标业务负责人"])],
+  ]);
   const names = new Map(state["公司主体"].map((entity) => [entity["主体编号"], entity["规范法律名称"]]));
+  const evidence = new Map((state["证据记录"] ?? []).map((item) => [item["证据编号"], item]));
+  const relationships = new Map((state["主体关系"] ?? []).map((item) => [item["关系编号"], item]));
+  const positions = new Map((state["人员身份"] ?? []).map((item) => [item["身份编号"], item]));
+  const people = new Map((state["核心人员"] ?? []).map((item) => [item["人员编号"], item]));
   return state["目标主体引用"].sort().flatMap((entityId) => dimensions.map((dimension) => {
-    const queries = state["查询记录"].filter((query) => query["查询对象引用"] === entityId && query["查询维度"] === dimension && query["是否独立核验"]);
-    const concluded = queries.some((query) => ["已发现", "已查询但未发现"].includes(query["命中情况"]));
-    return [entityId, names.get(entityId) ?? "", dimension, concluded ? "已形成独立结论" : "缺口", queries.map((query) => query["查询编号"]).join("；")];
+    const belongsToEntity = (query) => {
+      const target = query["查询对象引用"];
+      if (query["查询对象类型"] === "主体") return target === entityId;
+      if (query["查询对象类型"] === "主体关系") {
+        const relationship = relationships.get(target);
+        return [relationship?.["起点主体引用"], relationship?.["终点主体引用"]].includes(entityId);
+      }
+      if (query["查询对象类型"] === "人员身份") {
+        return positions.get(target)?.["所属主体引用"] === entityId;
+      }
+      if (query["查询对象类型"] === "人员") {
+        return (people.get(target)?.["身份引用"] ?? []).some(
+          (positionId) => positions.get(positionId)?.["所属主体引用"] === entityId,
+        );
+      }
+      return false;
+    };
+    const queries = state["查询记录"].filter((query) =>
+      query["查询维度"] === dimension && belongsToEntity(query)
+    );
+    const concluded = queries.filter((query) => query["是否独立核验"]).some((query) => {
+      if (query["访问结果"] !== "成功") return false;
+      if (query["命中情况"] === "已查询但未发现") return Boolean(query["未命中范围"]?.trim());
+      if (query["命中情况"] !== "已发现") return false;
+      const referenceFields = {
+        "主体": "主体引用",
+        "主体关系": "主体关系引用",
+        "人员身份": "人员身份引用",
+      };
+      const referenceField = referenceFields[query["查询对象类型"]];
+      if (!referenceField) return false;
+      return (query["命中证据引用"] ?? []).some((evidenceId) => {
+        const item = evidence.get(evidenceId);
+        const allowedScopes = proofScopesByDimension.get(query["查询维度"]);
+        return item?.["核验状态"] === "已核验"
+          && ["较强证据", "强证据"].includes(item?.["证据等级"])
+          && (!allowedScopes || (item?.["证明范围"] ?? []).some((scope) => allowedScopes.has(scope)))
+          && (item?.[referenceField] ?? []).includes(query["查询对象引用"]);
+      });
+    });
+    const hasLead = !concluded && queries.some((query) =>
+      query["命中情况"] === "已发现" && (query["命中证据引用"] ?? []).length > 0
+    );
+    const status = concluded ? "已形成独立结论" : hasLead ? "仅有线索" : "缺口";
+    return [entityId, names.get(entityId) ?? "", dimension, status, queries.map((query) => query["查询编号"]).join("；")];
   }));
 }
 

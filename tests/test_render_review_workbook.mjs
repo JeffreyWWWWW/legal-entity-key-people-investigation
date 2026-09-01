@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildOverviewRows } from "../plugins/legal-entity-key-people-investigation/skills/legal-entity-key-people-investigation/scripts/render_review_workbook.mjs";
+import {
+  buildCoverageRows,
+  buildOverviewRows,
+} from "../plugins/legal-entity-key-people-investigation/skills/legal-entity-key-people-investigation/scripts/render_review_workbook.mjs";
 
 test("overview includes the skill version from state", () => {
   const state = {
@@ -29,4 +32,113 @@ test("overview includes the skill version from state", () => {
 
   const rows = buildOverviewRows(state, "HASH");
   assert.deepEqual(rows.find(([label]) => label === "Skill 版本"), ["Skill 版本", "1.0.1"]);
+});
+
+test("coverage distinguishes verified conclusions from leads", () => {
+  const state = {
+    "目标主体引用": ["ENT-001"],
+    "公司主体": [{ "主体编号": "ENT-001", "规范法律名称": "Example Co" }],
+    "查询记录": [
+      {
+        "查询编号": "QRY-001",
+        "查询对象类型": "主体",
+        "查询对象引用": "ENT-001",
+        "查询维度": "技术与研发负责人",
+        "是否独立核验": true,
+        "访问结果": "成功",
+        "命中情况": "已发现",
+        "命中证据引用": ["EVD-001"],
+      },
+    ],
+    "证据记录": [
+      { "证据编号": "EVD-001", "证据等级": "线索证据", "核验状态": "待核验" },
+    ],
+  };
+
+  const row = buildCoverageRows(state).find((item) => item[2] === "技术与研发负责人");
+  assert.equal(row[3], "仅有线索");
+});
+
+test("coverage rejects verified evidence bound to another entity", () => {
+  const state = {
+    "目标主体引用": ["ENT-001"],
+    "公司主体": [{ "主体编号": "ENT-001", "规范法律名称": "Example Co" }],
+    "查询记录": [{
+      "查询编号": "QRY-001",
+      "查询对象类型": "主体",
+      "查询对象引用": "ENT-001",
+      "查询维度": "主体身份",
+      "是否独立核验": true,
+      "访问结果": "成功",
+      "命中情况": "已发现",
+      "命中证据引用": ["EVD-001"],
+    }],
+    "证据记录": [{
+      "证据编号": "EVD-001",
+      "证据等级": "强证据",
+      "核验状态": "已核验",
+      "主体引用": ["ENT-002"],
+    }],
+  };
+
+  const row = buildCoverageRows(state).find((item) => item[2] === "主体身份");
+  assert.equal(row[3], "仅有线索");
+});
+
+test("coverage attributes position queries to the position entity", () => {
+  const state = {
+    "目标主体引用": ["ENT-001"],
+    "公司主体": [{ "主体编号": "ENT-001", "规范法律名称": "Example Co" }],
+    "主体关系": [],
+    "核心人员": [],
+    "人员身份": [{ "身份编号": "POS-001", "所属主体引用": "ENT-001" }],
+    "查询记录": [{
+      "查询编号": "QRY-001",
+      "查询对象类型": "人员身份",
+      "查询对象引用": "POS-001",
+      "查询维度": "最高管理层",
+      "是否独立核验": true,
+      "访问结果": "成功",
+      "命中情况": "已发现",
+      "命中证据引用": ["EVD-001"],
+    }],
+    "证据记录": [{
+      "证据编号": "EVD-001",
+      "证据等级": "较强证据",
+      "核验状态": "已核验",
+      "人员身份引用": ["POS-001"],
+      "证明范围": ["CEO"],
+    }],
+  };
+
+  const row = buildCoverageRows(state).find((item) => item[2] === "最高管理层");
+  assert.equal(row[3], "已形成独立结论");
+  assert.equal(row[4], "QRY-001");
+});
+
+test("coverage rejects evidence whose proof scope does not answer the query dimension", () => {
+  const state = {
+    "目标主体引用": ["ENT-001"],
+    "公司主体": [{ "主体编号": "ENT-001", "规范法律名称": "Example Co" }],
+    "查询记录": [{
+      "查询编号": "QRY-001",
+      "查询对象类型": "主体",
+      "查询对象引用": "ENT-001",
+      "查询维度": "技术与研发负责人",
+      "是否独立核验": true,
+      "访问结果": "成功",
+      "命中情况": "已发现",
+      "命中证据引用": ["EVD-001"],
+    }],
+    "证据记录": [{
+      "证据编号": "EVD-001",
+      "证据等级": "强证据",
+      "核验状态": "已核验",
+      "主体引用": ["ENT-001"],
+      "证明范围": ["主体身份"],
+    }],
+  };
+
+  const row = buildCoverageRows(state).find((item) => item[2] === "技术与研发负责人");
+  assert.equal(row[3], "仅有线索");
 });
