@@ -46,4 +46,5 @@ python scripts/tavily_search.py "Example Corp CTO research leader"
 
 每次调用对应一个明确的查询维度，记录实际查询词和调用时间。Tavily 命中本身的
 `是否独立核验`为 `false`；候选 URL 经实际访问后，另建原始来源证据及独立核验查询。
-不得把 Tavily 摘要填入原始来源的`关键原文`字段。
+不得把 Tavily 摘要填入原始来源的`关键原文`字段。实际访问后仍遇到登录墙、付费墙或无法
+在页面中定位原文时，保留为非独立查询或线索，不得升级为独立结论。

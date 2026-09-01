@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -49,6 +50,16 @@ REQUIRED_COMPLETION_QUERY_DIMENSIONS = {
 GENERIC_SOURCES = {"原始官网、监管文件或公开登记入口", "原始官网、监管文件或公开登记入口等"}
 INSTITUTION_NAMES = {"Vanguard", "BlackRock", "Morgan Stanley", "贝莱德", "先锋集团", "摩根士丹利"}
 EVIDENCE_LEVELS = {"线索证据": 0, "较强证据": 1, "强证据": 2}
+SOURCE_LIST_SEPARATORS = (" / ", "、", "；", ";")
+LEAD_SOURCE_CATEGORIES = {"行业媒体", "新闻媒体", "第三方数据库", "搜索服务"}
+QUERY_DIMENSION_PROOF_SCOPES = {
+    "主体身份": {"主体身份"},
+    "控制与所有权": {"控制与所有权", "自然人股东", "最终受益人", "实际控制人", "母公司", "子公司"},
+    "创始人": {"创始人", "联合创始人"},
+    "最高管理层": {"最高管理层", "董事长", "CEO", "总裁", "其他核心管理人员"},
+    "技术与研发负责人": {"技术与研发负责人", "技术负责人", "研发负责人", "工程负责人"},
+    "目标业务负责人": {"目标业务负责人"},
+}
 
 
 class ValidationError(ValueError):
@@ -64,8 +75,12 @@ def validate_query_quality(query: dict) -> None:
         raise ValidationError("独立核验不得使用泛化占位数据源")
     if query.get("数据源类型") in {"搜索服务", "用户材料", "搜索摘要"}:
         raise ValidationError("搜索服务、用户材料和搜索摘要不得标为独立核验")
+    if query.get("访问结果") != "成功":
+        raise ValidationError("独立核验必须成功访问原始来源")
     if not str(query.get("实际访问位置", "")).strip() or not str(query.get("访问内容摘要", "")).strip():
         raise ValidationError("独立核验必须填写实际访问位置和访问内容摘要")
+    if query.get("命中情况") == "已发现" and query.get("原文定位状态") != "已定位":
+        raise ValidationError("独立核验发现事实时必须定位原文")
     if query.get("命中情况") == "已查询但未发现" and not str(query.get("未命中范围", "")).strip():
         raise ValidationError("已查询但未发现必须填写未命中范围")
 
@@ -73,8 +88,124 @@ def validate_query_quality(query: dict) -> None:
 def validate_evidence_quality(evidence: dict) -> None:
     category = evidence.get("来源类别")
     level = evidence.get("证据等级")
-    if category in {"行业媒体", "新闻媒体", "第三方数据库", "搜索服务"} and level in {"较强证据", "强证据"}:
+    if category in LEAD_SOURCE_CATEGORIES and level in {"较强证据", "强证据"}:
         raise ValidationError(f"{category}最高只能标为线索证据")
+    publisher = str(evidence.get("发布主体", ""))
+    if category in LEAD_SOURCE_CATEGORIES and any(
+        separator in publisher for separator in SOURCE_LIST_SEPARATORS
+    ):
+        raise ValidationError("每条证据记录只能对应单一来源和单一原始URL")
+
+
+def _normalized_legal_name(value: str) -> str:
+    return re.sub(r"[^0-9a-z\u4e00-\u9fff]+", "", str(value).casefold())
+
+
+def _entity_legal_names(entity: dict) -> set[str]:
+    name = _normalized_legal_name(entity.get("规范法律名称", ""))
+    return {name} if name else set()
+
+
+def validate_evidence_source_scope(
+    evidence: dict,
+    entities: dict[str, dict],
+    relationships: dict[str, dict],
+) -> None:
+    cited_entity_ids = set(evidence.get("主体引用", []))
+    source_names = {
+        _normalized_legal_name(name)
+        for name in evidence.get("原文主体名称", [])
+        if str(name).strip()
+    }
+    if evidence.get("核验状态") == "已核验" and cited_entity_ids and not source_names:
+        raise ValidationError(f"{evidence.get('证据编号', '证据')}缺少原文主体名称")
+    if evidence.get("核验状态") != "已核验":
+        return
+
+    mapping_ids = evidence.get("主体映射关系引用", [])
+    for cited_entity_id in cited_entity_ids:
+        entity = entities.get(cited_entity_id)
+        if not entity:
+            continue
+        if source_names & _entity_legal_names(entity):
+            continue
+        mapped = False
+        for relationship_id in mapping_ids:
+            if relationship_id in evidence.get("主体关系引用", []):
+                continue
+            relationship = relationships.get(relationship_id)
+            if not relationship or relationship.get("核验状态") != "已核验":
+                continue
+            endpoints = {
+                relationship.get("起点主体引用"),
+                relationship.get("终点主体引用"),
+            }
+            if cited_entity_id not in endpoints:
+                continue
+            other_ids = endpoints - {cited_entity_id}
+            if any(
+                source_names & _entity_legal_names(entities[entity_id])
+                for entity_id in other_ids
+                if entity_id in entities
+            ):
+                mapped = True
+                break
+        if not mapped:
+            raise ValidationError(
+                f"{evidence.get('证据编号', '证据')}原文主体未直接记载{cited_entity_id}且缺少已核验映射关系"
+            )
+
+
+def validate_entity_evidence(entity: dict, evidence_index: dict[str, dict]) -> None:
+    if entity.get("主体身份状态") != "已核验":
+        return
+    entity_id = entity.get("主体编号")
+    matching = [
+        evidence_index[evidence_id]
+        for evidence_id in entity.get("证据引用", [])
+        if evidence_id in evidence_index
+    ]
+    if not any(
+        item.get("核验状态") == "已核验"
+        and item.get("证据等级") in {"较强证据", "强证据"}
+        and entity_id in item.get("主体引用", [])
+        and "主体身份" in item.get("证明范围", [])
+        for item in matching
+    ):
+        raise ValidationError(f"{entity_id}缺少已核验的主体身份较强或强证据")
+
+
+def query_supports_independent_conclusion(query: dict, evidence_index: dict[str, dict]) -> bool:
+    if not query.get("是否独立核验") or query.get("访问结果") != "成功":
+        return False
+    if query.get("命中情况") == "已查询但未发现":
+        return bool(str(query.get("未命中范围", "")).strip())
+    if query.get("命中情况") != "已发现":
+        return False
+    reference_fields = {
+        "主体": "主体引用",
+        "主体关系": "主体关系引用",
+        "人员身份": "人员身份引用",
+    }
+    reference_field = reference_fields.get(query.get("查询对象类型"))
+    if query.get("查询对象类型") == "人员":
+        return False
+    query_target = query.get("查询对象引用")
+    allowed_scopes = QUERY_DIMENSION_PROOF_SCOPES.get(query.get("查询维度"))
+    return any(
+        evidence_index[evidence_id].get("核验状态") == "已核验"
+        and evidence_index[evidence_id].get("证据等级") in {"较强证据", "强证据"}
+        and (
+            allowed_scopes is None
+            or bool(allowed_scopes & set(evidence_index[evidence_id].get("证明范围", [])))
+        )
+        and (
+            reference_field is None
+            or query_target in evidence_index[evidence_id].get(reference_field, [])
+        )
+        for evidence_id in query.get("命中证据引用", [])
+        if evidence_id in evidence_index
+    )
 
 
 def validate_position_quality(position: dict, target_ids: set[str], relationship_ids: set[str]) -> None:
@@ -163,6 +294,8 @@ def _validate_references(state: dict, indexes: dict) -> None:
             _require(indexes, "主体关系", relationship_id, evidence_id)
         for position_id in evidence["人员身份引用"]:
             _require(indexes, "人员身份", position_id, evidence_id)
+        for relationship_id in evidence["主体映射关系引用"]:
+            _require(indexes, "主体关系", relationship_id, evidence_id)
 
     query_targets = {
         "主体": "公司主体",
@@ -338,8 +471,7 @@ def _validate_query_results(state: dict, indexes: dict) -> None:
         covered_dimensions = {
             query["查询维度"]
             for query in independent_queries
-            if query["访问结果"] == "成功"
-            and query["命中情况"] in {"已发现", "已查询但未发现"}
+            if query_supports_independent_conclusion(query, indexes["证据记录"])
         }
         missing_dimensions = sorted(REQUIRED_COMPLETION_QUERY_DIMENSIONS - covered_dimensions)
         if missing_dimensions:
@@ -402,6 +534,13 @@ def validate_state(state: dict) -> None:
         validate_position_quality(person, target_ids, relationship_ids)
     for evidence in state["证据记录"]:
         validate_evidence_quality(evidence)
+        validate_evidence_source_scope(
+            evidence,
+            indexes["公司主体"],
+            indexes["主体关系"],
+        )
+    for entity in state["公司主体"]:
+        validate_entity_evidence(entity, indexes["证据记录"])
     _validate_summary(state)
     stored_hash = state["渲染元数据"]["状态内容哈希"]
     if stored_hash and stored_hash != state_hash(state):

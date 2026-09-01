@@ -73,7 +73,7 @@ def build_state(args: argparse.Namespace) -> dict:
         )
 
     state = {
-        "规范版本": "1.0.0",
+        "规范版本": "1.2.0",
         "skill_version": get_skill_version(),
         "任务元数据": {
             "任务编号": args.task_id,

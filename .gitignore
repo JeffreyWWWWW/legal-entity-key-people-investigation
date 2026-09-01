@@ -6,6 +6,7 @@ tests/
 !tests/
 tests/*
 !tests/test_tavily_search.py
+!tests/test_migrate_state.py
 assets/
 # Local Superpowers planning documents must not be published.
 docs/superpowers/
